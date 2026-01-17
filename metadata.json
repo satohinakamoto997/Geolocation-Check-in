@@ -1,0 +1,8 @@
+{
+  "name": "GeoCheck-In Master",
+  "description": "A high-precision location-based check-in application with camera verification and AI feedback.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}
