@@ -23,8 +23,8 @@ export const CHECKIN_POINTS: (LocationPoint & { periodId: number | string })[] =
   { id: 304, periodId: 3, name: "เดอะซีน", lat: 13.7735708, lng: 100.6100072, startTime: "16:30", endTime: "19:30" },
   { id: 305, periodId: 3, name: "แม็คโคร ฟู้ดเซอร์วิส บดินทร์เดชา", lat: 13.7709566, lng: 100.6145961, startTime: "16:30", endTime: "19:30" },
 
-  // // ช่วงเวลาเทสระบบ: 19:30 ถึง 05:00
-  // { id: 999, periodId: "TEST", name: "จุดทดสอบระบบ", lat: 13.734950435547592, lng: 100.62137142854893, startTime: "19:30", endTime: "05:00" }
+  // ช่วงเวลาเทสระบบ: 19:30 ถึง 05:00
+  { id: 999, periodId: "TEST", name: "จุดทดสอบระบบ", lat: 13.734950435547592, lng: 100.62137142854893, startTime: "19:30", endTime: "05:00" }
 ];
 
 export const DISTANCE_THRESHOLD_METERS = 200;
