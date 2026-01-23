@@ -46,22 +46,17 @@ const App: React.FC = () => {
     if (!audioContextRef.current) {
       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
-    const ctx = audioContextRef.current;
-    if (ctx.state === 'suspended') {
-      ctx.resume();
+    if (audioContextRef.current.state === 'suspended') {
+      audioContextRef.current.resume();
     }
-    return ctx;
+    return audioContextRef.current;
   };
 
-  const startSirenLoop = () => {
+  const startSirenLoop = async () => {
     try {
-      // Clean up any existing siren first
-      stopSirenLoop();
-
       const ctx = initAudioContext();
-      // Even if called from a timer, if we primed it earlier, resume() should work or state should be 'running'
       if (ctx.state === 'suspended') {
-        ctx.resume();
+        await ctx.resume();
       }
 
       const now = ctx.currentTime;
@@ -96,12 +91,10 @@ const App: React.FC = () => {
   const stopSirenLoop = () => {
     if (sirenNodesRef.current) {
       const { osc, lfo, gain } = sirenNodesRef.current;
-      const ctx = audioContextRef.current;
-      if (ctx) {
-        const now = ctx.currentTime;
-        gain.gain.cancelScheduledValues(now);
-        gain.gain.linearRampToValueAtTime(0, now + 0.2);
-      }
+      const ctx = initAudioContext();
+      const now = ctx.currentTime;
+      gain.gain.cancelScheduledValues(now);
+      gain.gain.linearRampToValueAtTime(0, now + 0.2);
       setTimeout(() => {
         try {
           osc.stop();
@@ -129,7 +122,7 @@ const App: React.FC = () => {
     return d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
   };
 
-  // Restoration logic on mount
+  // Restoration logic on mount (Modified for Daily Reset)
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -137,21 +130,33 @@ const App: React.FC = () => {
         const parsed = JSON.parse(saved);
         if (parsed.checkIns && Array.isArray(parsed.checkIns) && parsed.checkIns.length > 0) {
           const lastCheckIn = parsed.checkIns[parsed.checkIns.length - 1];
-          setState(prev => ({
-            ...prev,
-            checkIns: parsed.checkIns,
-            selectedPointId: lastCheckIn.pointId
-          }));
 
-          const startTime = new Date(lastCheckIn.timestamp).getTime();
-          const now = Date.now();
-          const elapsedSeconds = Math.floor((now - startTime) / 1000);
-          const remaining = COUNTDOWN_DURATION_SECONDS - elapsedSeconds;
+          // --- ตรวจสอบว่าเป็นข้อมูลของ "วันนี้" หรือไม่ ---
+          const checkInDate = new Date(lastCheckIn.timestamp).toDateString();
+          const todayDate = new Date().toDateString();
 
-          if (remaining > 0) {
-            setCountdownSeconds(remaining);
+          if (checkInDate === todayDate) {
+            // เป็นของวันนี้ กู้คืนสถานะตามปกติ
+            setState(prev => ({
+              ...prev,
+              checkIns: parsed.checkIns,
+              selectedPointId: lastCheckIn.pointId
+            }));
+
+            const startTime = new Date(lastCheckIn.timestamp).getTime();
+            const now = Date.now();
+            const elapsedSeconds = Math.floor((now - startTime) / 1000);
+            const remaining = COUNTDOWN_DURATION_SECONDS - elapsedSeconds;
+
+            if (remaining > 0) {
+              setCountdownSeconds(remaining);
+            } else {
+              setIsWaitingForSave(true);
+            }
           } else {
-            setIsWaitingForSave(true);
+            // ไม่ใช่ของวันนี้ (ข้ามวันแล้ว) ล้างข้อมูลทิ้ง
+            localStorage.removeItem(STORAGE_KEY);
+            console.log("Daily reset: ข้อมูลของวันเก่าถูกลบออกแล้ว");
           }
         }
       } catch (e) {
@@ -371,18 +376,7 @@ const App: React.FC = () => {
   }, [countdownSeconds, isWaitingForSave]);
 
   const handleCapturePhoto = useCallback((photoBase64: string) => {
-    // CRITICAL: Priming the AudioContext on user interaction to ensure sound works later
-    const ctx = initAudioContext();
-    if (ctx) {
-      // Play a short silent sound to unlock audio
-      const silentOsc = ctx.createOscillator();
-      const silentGain = ctx.createGain();
-      silentGain.gain.setValueAtTime(0, ctx.currentTime);
-      silentOsc.connect(silentGain);
-      silentGain.connect(ctx.destination);
-      silentOsc.start();
-      silentOsc.stop(ctx.currentTime + 0.1);
-    }
+    initAudioContext();
 
     setState(prev => {
       const selectedPoint = prev.points.find(p => p.id === prev.selectedPointId);
@@ -500,8 +494,8 @@ const App: React.FC = () => {
                   <div className="flex justify-between items-start gap-4 mb-4">
                     <h2 className="text-xl font-black text-slate-900 leading-tight">{selectedPoint.name}</h2>
                     <span className={`shrink-0 text-[10px] font-black px-2 py-1 rounded-md shadow-sm border ${status === 'CHECKED' ? 'bg-green-100 text-green-700 border-green-200' :
-                      status === 'AVAILABLE' ? 'bg-blue-100 text-blue-700 border-blue-200' :
-                        status === 'TOO_FAR' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-red-100 text-red-700 border-red-200'
+                        status === 'AVAILABLE' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                          status === 'TOO_FAR' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-red-100 text-red-700 border-red-200'
                       }`}>
                       {status === 'CHECKED' && 'เช็คอินสำเร็จ'}
                       {status === 'AVAILABLE' && 'พร้อมเช็คอิน'}
