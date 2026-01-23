@@ -7,7 +7,7 @@ import { CHECKIN_POINTS, DISTANCE_THRESHOLD_METERS } from './constants';
 import { AppState, CheckInRecord, UserLocation, LocationPoint } from './types';
 import { sendCheckInNotification, TELEGRAM_CHAT_ID, CheckInPayload } from './services/backendService';
 
-const COUNTDOWN_DURATION_MINUTES = 1;
+const COUNTDOWN_DURATION_MINUTES = 16;
 const COUNTDOWN_DURATION_SECONDS = COUNTDOWN_DURATION_MINUTES * 60;
 const STORAGE_KEY = 'geo_checkin_persistence_v1';
 
