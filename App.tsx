@@ -131,29 +131,28 @@ const App: React.FC = () => {
     const requestPermissions = async () => {
       if (Capacitor.isNativePlatform()) {
         try {
-          // Request Push Notifications
-          let permStatus = await PushNotifications.checkPermissions();
-          if (permStatus.receive !== 'granted') {
-            permStatus = await PushNotifications.requestPermissions();
-          }
+          // 1. Request Push Notifications FIRST and IMMEDIATELY
+          console.log("Requesting Push Notifications permission...");
+          const pushPerm = await PushNotifications.requestPermissions();
+          console.log("Push Notification status:", pushPerm.receive);
 
-          // Request Camera
-          let cameraStatus = await Camera.checkPermissions();
-          if (cameraStatus.camera !== 'granted') {
-            await Camera.requestPermissions();
-          }
+          // 2. Request Camera
+          console.log("Requesting Camera permission...");
+          await Camera.requestPermissions();
 
-          // Request Geolocation
-          let geoStatus = await Geolocation.checkPermissions();
-          if (geoStatus.location !== 'granted') {
-            await Geolocation.requestPermissions();
-          }
+          // 3. Request Geolocation
+          console.log("Requesting Geolocation permission...");
+          await Geolocation.requestPermissions();
         } catch (e) {
           console.error("Error requesting permissions", e);
         }
       }
     };
-    requestPermissions();
+    // Small delay to ensure the app is fully loaded before showing the native dialog
+    const timer = setTimeout(() => {
+      requestPermissions();
+    }, 500);
+    return () => clearTimeout(timer);
   }, []);
 
   // Restoration logic on mount (Modified for Daily Reset)
