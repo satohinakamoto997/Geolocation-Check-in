@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">GeolocationCheckIn</string>
+    <string name="title_activity_main">GeolocationCheckIn</string>
+    <string name="package_name">com.geolocation.checkin</string>
+    <string name="custom_url_scheme">com.geolocation.checkin</string>
+</resources>

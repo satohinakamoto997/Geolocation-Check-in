@@ -1,5 +1,9 @@
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { Camera } from '@capacitor/camera';
+import { Geolocation } from '@capacitor/geolocation';
+import { PushNotifications } from '@capacitor/push-notifications';
+import { Capacitor } from '@capacitor/core';
 import MapView from './components/MapView';
 import CameraModal from './components/CameraModal';
 import PhotoPreviewModal from './components/PhotoPreviewModal';
@@ -121,6 +125,36 @@ const App: React.FC = () => {
     const d = new Date(dateSource);
     return d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
   };
+
+  // Request permissions on mount
+  useEffect(() => {
+    const requestPermissions = async () => {
+      if (Capacitor.isNativePlatform()) {
+        try {
+          // Request Push Notifications
+          let permStatus = await PushNotifications.checkPermissions();
+          if (permStatus.receive !== 'granted') {
+            permStatus = await PushNotifications.requestPermissions();
+          }
+
+          // Request Camera
+          let cameraStatus = await Camera.checkPermissions();
+          if (cameraStatus.camera !== 'granted') {
+            await Camera.requestPermissions();
+          }
+
+          // Request Geolocation
+          let geoStatus = await Geolocation.checkPermissions();
+          if (geoStatus.location !== 'granted') {
+            await Geolocation.requestPermissions();
+          }
+        } catch (e) {
+          console.error("Error requesting permissions", e);
+        }
+      }
+    };
+    requestPermissions();
+  }, []);
 
   // Restoration logic on mount (Modified for Daily Reset)
   useEffect(() => {
