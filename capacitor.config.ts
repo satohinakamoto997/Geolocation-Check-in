@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.geolocation.checkin',
-  appName: 'GeolocationCheckIn',
+  appId: 'com.geocheck.app.pro',
+  appName: 'GeoCheck',
   webDir: 'dist'
 };
 
